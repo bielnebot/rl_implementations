@@ -9,7 +9,7 @@ def observation_transformation(image):
     """
     Transforms the default observation into a simpler one
     :param image: the original observation of the environment. A 3D numpy array
-    :return: a 2D numpy array with unified green and cropping at the bottom
+    :return: a 2D numpy array with unified green and cropping at the bottom and shape (1, 84, 96)
     """
     # Extract green channel
     image = image[:, :, 1]
@@ -23,7 +23,6 @@ def observation_transformation(image):
     image[image == 230 / max_value] = 1
     # Reshape to (96,96)
     image = np.reshape(image, (1,) + image.shape)
-    print("image.shape=",image.shape)
     return image
 
 
@@ -53,8 +52,8 @@ def run_episode(policy=None):
     observation = env.reset()
 
     for _ in range(100):
+        # Reshape observation to (batch, channel, height, width)
         observation = np.reshape(observation, (1,) + observation.shape)
-        print("nova obs = ",observation, observation.shape)
         env.render()
         # Action
         if policy is not None:

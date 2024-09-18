@@ -2,12 +2,9 @@ import numpy as np
 import torch
 from torch import nn
 
-ACTION_SPACE_DIMENSION = 3
-
-
 class CustomNN(nn.Module):
 
-    def __init__(self):
+    def __init__(self, output_dimension):
         super().__init__()
 
         # CNN
@@ -25,11 +22,14 @@ class CustomNN(nn.Module):
         self.linear = nn.Sequential(
             nn.Linear(16*4*4, 400),
             nn.ReLU(),
-            nn.Linear(400, ACTION_SPACE_DIMENSION),
+            nn.Linear(400, output_dimension),
             nn.ReLU()
         )
 
     def forward(self, x):
+        if len(x.shape) == 3:
+            x = np.reshape(x, (1,) + x.shape)
+
         if isinstance(x, np.ndarray):
             x = torch.tensor(x,dtype=torch.float)
 
@@ -39,10 +39,11 @@ class CustomNN(nn.Module):
 
 
 if __name__ == "__main__":
-    # Generate a random image
+    # Generate a random batch of 6 images
     sample_image = np.random.random((6,1,84,95))
     # Initialise the neural network
-    policy = CustomNN()
+    ACTION_SPACE_DIMENSION = 3
+    policy = CustomNN(output_dimension=ACTION_SPACE_DIMENSION)
     # Compute the output
     output = policy(sample_image)
     print("output=",output,output.shape)

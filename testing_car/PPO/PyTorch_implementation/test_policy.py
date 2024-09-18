@@ -3,19 +3,20 @@ def test_single_episode(env,policy):
 
     rewards = []
 
-    obs, _ = env.reset()
+    obs = env.reset()
     done = False
-
     t = 0
 
     for _ in range(150):
+        env.render()
         t += 1
-        action = policy(obs).detach().numpy()
-        obs, rew, done, _, _ = env.step(action)
+
+        action = policy(obs).detach().numpy()[0]
+        obs, rew, done, _ = env.step(action)
 
         rewards.append(rew)
 
-    print(sum(rewards)/len(rewards))
+    print(f"episode reward: {sum(rewards)}")
     return rewards
 
 

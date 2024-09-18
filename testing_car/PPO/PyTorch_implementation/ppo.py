@@ -21,8 +21,8 @@ class PPO():
         self._init_hyperparameters()
 
         # Actor and critic
-        self.actor = CustomNN(self.obs_dim, self.act_dim)
-        self.critic = CustomNN(self.obs_dim, 1) # 1-dimensional state value
+        self.actor = CustomNN(self.act_dim)
+        self.critic = CustomNN(1) # 1-dimensional state value
 
         self.actor_optim = Adam(self.actor.parameters(), lr=self.lr)
         self.critic_optim = Adam(self.critic.parameters(), lr=self.lr)
@@ -32,16 +32,18 @@ class PPO():
 
     def _init_hyperparameters(self):
         self.time_steps_per_batch = 1000
-        self.max_time_steps_per_episode = 205
-        self.gamma = 0.95
+        self.max_time_steps_per_episode = 100
+        self.gamma = 0.99
         self.n_updates_per_iteration = 5
         self.clip = 0.2
-        self.lr = 0.005
+        self.lr = 0.001
 
     def get_action(self, observation):
 
         # Query the actor for a mean action
         mean = self.actor(observation)
+        # print("mean=",mean,mean.shape)
+        mean = mean.view(-1)
 
         # Create a distribution
         distribution = MultivariateNormal(mean, self.covariance_matrix)
@@ -82,7 +84,7 @@ class PPO():
 
         batch_rewards_to_go = torch.tensor(batch_rewards_to_go, dtype=torch.float)
 
-        return  batch_rewards_to_go
+        return batch_rewards_to_go
 
     def rollout(self):
         batch_observations = []
@@ -98,7 +100,7 @@ class PPO():
             # Rewards this episode
             episode_rewards = []
 
-            observation, _ = self.env.reset()
+            observation = self.env.reset()
             done = False
 
             for time_step_i in range(self.max_time_steps_per_episode): # for each episode, do...
@@ -111,7 +113,7 @@ class PPO():
                 action, log_prob = self.get_action(observation)
 
                 # Perform action
-                observation, reward, done, _, _ = self.env.step(action)
+                observation, reward, done, _ = self.env.step(action)
 
                 # Collect action, reward and log_prob
                 batch_actions.append(action)
@@ -131,7 +133,6 @@ class PPO():
         batch_rewards_to_go = self.compute_rewards_to_go(batch_rewards)
 
         return batch_observations, batch_actions, batch_log_probs, batch_rewards_to_go, batch_lenghts, batch_rewards
-
 
     def evaluate(self, batch_observations, batch_actions):
         V = self.critic(batch_observations).squeeze()
@@ -187,6 +188,6 @@ class PPO():
             t_so_far += np.sum(batch_lenghts)
 
             if t_so_far % 1000 == 0:
-                torch.save(self.actor.state_dict(), f"./checkpoints/PPO_PyTorch/g_{self.env.unwrapped.g}_{t_so_far}.pth")
+                torch.save(self.actor.state_dict(), f"./car_checkpoints/PPO_PyTorch/g_{t_so_far}.pth")
 
 

@@ -1,6 +1,6 @@
 import argparse
 import torch
-from gymnasium.envs.classic_control.pendulum import PendulumEnv
+import gym
 
 # Custom modules
 from environment import CustomEnv
@@ -9,11 +9,11 @@ from ppo import PPO
 from test_policy import test_policy
 
 
-def train(gravity):
+def train():
     print("Training")
     # Create environment
-    env = PendulumEnv(render_mode=None)
-    env = CustomEnv(env, forced_gravity=gravity)
+    env = gym.make('CarRacing-v0')
+    env = CustomEnv(env)
 
     # Create PPO instance
     model = PPO(env)
@@ -23,20 +23,19 @@ def train(gravity):
     print("Training finished")
 
 
-def test(gravity):
+def test():
     # Create environment
-    env = PendulumEnv(render_mode="human")
-    env = CustomEnv(env, forced_gravity=gravity)
+    env = gym.make('CarRacing-v0')
+    env = CustomEnv(env)
 
     # Extract policy input and output dimensions
-    obs_dim = env.observation_space.shape[0]
+    # obs_dim = env.observation_space.shape[0]
     act_dim = env.action_space.shape[0]
 
     # Create a policy and load the weights
-    policy = CustomNN(obs_dim, act_dim)
-    TIME_STEP_TO_TEST = 328000
-    # TIME_STEP_TO_TEST = 779000
-    policy.load_state_dict(torch.load(f"./checkpoints/PPO_PyTorch/g_{gravity}_{TIME_STEP_TO_TEST}.pth",weights_only=True))
+    policy = CustomNN(act_dim)
+    TIME_STEP_TO_TEST = 16000
+    policy.load_state_dict(torch.load(f"./car_checkpoints/PPO_PyTorch/g_{TIME_STEP_TO_TEST}.pth",weights_only=True))
 
     # Simulate an episode
     test_policy(env,policy)
@@ -45,15 +44,15 @@ def test(gravity):
 def main(args):
     # Train or test
     if args.mode == "train":
-        train(gravity=args.gravity)
+        train()
     else:
-        test(gravity=args.gravity)
+        test()
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("mode", type=str, help="train or test")
-    parser.add_argument("gravity", type=int, help="int from 0 to 20")
-    args = parser.parse_args()
-
-    main(args)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("mode", type=str, help="train or test")
+    # args = parser.parse_args()
+    #
+    # main(args)
+    train()

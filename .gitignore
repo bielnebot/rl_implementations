@@ -4,6 +4,12 @@
 !testing_car/
 !testing_car/**
 
+
+
 # Other files
 !README.md
 !.gitignore
+
+
+# Ignore other files
+testing_car/**/__pycache__/
