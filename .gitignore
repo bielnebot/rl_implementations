@@ -1,0 +1,9 @@
+# Ignore everything
+*
+
+!testing_car/
+!testing_car/**
+
+# Other files
+!README.md
+!.gitignore
