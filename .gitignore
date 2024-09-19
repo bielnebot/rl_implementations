@@ -8,5 +8,6 @@
 !README.md
 !.gitignore
 
-# Ignore other files
+# Ignore other files and directories
 **/__pycache__/
+*.ps1

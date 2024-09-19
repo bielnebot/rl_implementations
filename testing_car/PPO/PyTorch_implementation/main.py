@@ -32,7 +32,7 @@ def train():
     model = PPO(env, checkpoint)
 
     print("Training starts")
-    model.learn(200_000_000)
+    model.learn(10_005)
     print("Training finished")
 
 

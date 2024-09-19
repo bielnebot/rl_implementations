@@ -9,7 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 # Custom modules
 from neural_networks import CustomNN
 
-writer = SummaryWriter()
+writer = SummaryWriter(log_dir="test_run")
 
 
 class PPO():
@@ -22,8 +22,9 @@ class PPO():
         # Hyperparameters
         self._init_hyperparameters()
 
-        # Simulated time
+        # Simulated time (or counters)
         self.t_so_far = 0
+        self.loss_counter = 0
 
         # Actor, critic and optimisers
         self.actor = CustomNN(self.act_dim)
@@ -37,7 +38,8 @@ class PPO():
             self.critic.load_state_dict(checkpoint["value_function_state_dict"])
             self.actor_optim.load_state_dict(checkpoint["optimizer_policy_state_dict"])
             self.critic_optim.load_state_dict(checkpoint["optimizer_value_state_dict"])
-            self.t_so_far = checkpoint["episode"]
+            self.t_so_far = checkpoint["t_so_far"]
+            self.loss_counter = checkpoint["loss_counter"]
             print("Loaded checkpoint!")
 
         self.variances = torch.full(size=(self.act_dim,), fill_value=0.5)
@@ -45,8 +47,8 @@ class PPO():
 
 
     def _init_hyperparameters(self):
-        self.time_steps_per_batch = 1000
-        self.max_time_steps_per_episode = 100
+        self.time_steps_per_batch = 5000
+        self.max_time_steps_per_episode = 1000
         self.gamma = 0.99
         self.n_updates_per_iteration = 5
         self.clip = 0.2
@@ -160,8 +162,9 @@ class PPO():
         return V, log_probs
 
     def learn(self, total_time_steps):
-        loss_counter = 0
 
+
+        total_time_steps = self.t_so_far + total_time_steps # optionally to use interrupted training
         while self.t_so_far < total_time_steps:
             batch_observations, batch_actions, batch_log_probs, batch_rewards_to_go, batch_lenghts, batch_rewards = self.rollout()
 
@@ -184,8 +187,8 @@ class PPO():
                 surr1 = ratio * A_k
                 surr2 = torch.clamp(ratio, 1-self.clip, 1 + self.clip) * A_k
                 actor_loss = (-torch.min(surr1,surr2)).mean()
-                writer.add_scalar("actor_loss", actor_loss, loss_counter)
-                loss_counter += 1
+                writer.add_scalar("actor_loss", actor_loss, self.loss_counter)
+                self.loss_counter += 1
 
                 # Calculate gradients + backpropagation
                 self.actor_optim.zero_grad()
@@ -207,11 +210,12 @@ class PPO():
             # Save a checkpoint
             if self.t_so_far % 1000 == 0:
                 checkpoint = {
-                    'episode': self.t_so_far,
-                    'policy_state_dict': self.actor.state_dict(),
-                    'value_function_state_dict': self.critic.state_dict(),
-                    'optimizer_policy_state_dict': self.actor_optim.state_dict(),
-                    'optimizer_value_state_dict': self.critic_optim.state_dict()
+                    "t_so_far": self.t_so_far,
+                    "loss_counter": self.loss_counter,
+                    "policy_state_dict": self.actor.state_dict(),
+                    "value_function_state_dict": self.critic.state_dict(),
+                    "optimizer_policy_state_dict": self.actor_optim.state_dict(),
+                    "optimizer_value_state_dict": self.critic_optim.state_dict()
                 }
                 torch.save(checkpoint, f"./car_checkpoints/PPO_PyTorch/checkpoint_{self.t_so_far}.pth")
 
