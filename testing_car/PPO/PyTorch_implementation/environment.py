@@ -15,12 +15,11 @@ def observation_transformation(image):
     image = image[:, :, 1]
     # Crop the bottom of the image
     image = image[:84,:]
-    # Normalise
-    max_value = np.max(image)
-    image = image / max_value
     # Set green tonalities equal
-    image[image == 204 / max_value] = 1
-    image[image == 230 / max_value] = 1
+    image[image == 204] = 255
+    image[image == 230] = 255
+    # Normalise
+    image = image / 255
     # Reshape to (96,96)
     image = np.reshape(image, (1,) + image.shape)
     return image
@@ -46,7 +45,7 @@ class CustomEnv(Wrapper):
 
 
 def run_episode(policy=None):
-    env = gym.make('CarRacing-v0')
+    env = gym.make("CarRacing-v0")
     env = CustomEnv(env)
 
     observation = env.reset()
@@ -66,9 +65,9 @@ def run_episode(policy=None):
         observation, reward, done, info = env.step(action)
 
         # Plot
-        # plt.imshow(observation[0])
-        # plt.colorbar()
-        # plt.show()
+        plt.imshow(observation[0])
+        plt.colorbar()
+        plt.show()
 
         if done:
             observation = env.reset()
@@ -82,5 +81,5 @@ if __name__ == "__main__":
 
     # Run an episode with a random policy
     from neural_networks import CustomNN
-    policy = CustomNN()
+    policy = CustomNN(3)
     run_episode(policy)

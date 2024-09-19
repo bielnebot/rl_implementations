@@ -9,9 +9,11 @@ from torch.utils.tensorboard import SummaryWriter
 # Custom modules
 from neural_networks import CustomNN
 
+writer = SummaryWriter()
+
 
 class PPO():
-    def __init__(self,env):
+    def __init__(self,env,checkpoint):
         # Environment
         self.env = env
         self.obs_dim = env.observation_space.shape[0]
@@ -20,15 +22,27 @@ class PPO():
         # Hyperparameters
         self._init_hyperparameters()
 
-        # Actor and critic
-        self.actor = CustomNN(self.act_dim)
-        self.critic = CustomNN(1) # 1-dimensional state value
+        # Simulated time
+        self.t_so_far = 0
 
+        # Actor, critic and optimisers
+        self.actor = CustomNN(self.act_dim)
+        self.critic = CustomNN(1)  # 1-dimensional state value
         self.actor_optim = Adam(self.actor.parameters(), lr=self.lr)
         self.critic_optim = Adam(self.critic.parameters(), lr=self.lr)
 
+        # Load checkpoint if exists
+        if checkpoint is not None:
+            self.actor.load_state_dict(checkpoint["policy_state_dict"])
+            self.critic.load_state_dict(checkpoint["value_function_state_dict"])
+            self.actor_optim.load_state_dict(checkpoint["optimizer_policy_state_dict"])
+            self.critic_optim.load_state_dict(checkpoint["optimizer_value_state_dict"])
+            self.t_so_far = checkpoint["episode"]
+            print("Loaded checkpoint!")
+
         self.variances = torch.full(size=(self.act_dim,), fill_value=0.5)
         self.covariance_matrix = torch.diag(self.variances)
+
 
     def _init_hyperparameters(self):
         self.time_steps_per_batch = 1000
@@ -146,10 +160,9 @@ class PPO():
         return V, log_probs
 
     def learn(self, total_time_steps):
-        writer = SummaryWriter()
-        t_so_far = 0
+        loss_counter = 0
 
-        while t_so_far < total_time_steps:
+        while self.t_so_far < total_time_steps:
             batch_observations, batch_actions, batch_log_probs, batch_rewards_to_go, batch_lenghts, batch_rewards = self.rollout()
 
             # Compute V_{phi, k}
@@ -171,6 +184,8 @@ class PPO():
                 surr1 = ratio * A_k
                 surr2 = torch.clamp(ratio, 1-self.clip, 1 + self.clip) * A_k
                 actor_loss = (-torch.min(surr1,surr2)).mean()
+                writer.add_scalar("actor_loss", actor_loss, loss_counter)
+                loss_counter += 1
 
                 # Calculate gradients + backpropagation
                 self.actor_optim.zero_grad()
@@ -183,11 +198,22 @@ class PPO():
                 self.critic_optim.step()
 
             average_reward = np.mean(batch_rewards)
-            writer.add_scalar("reward",average_reward,t_so_far)
+            max_reward = np.max(batch_rewards)
+            writer.add_scalar("average_reward",average_reward,self.t_so_far)
+            writer.add_scalar("max_reward",max_reward,self.t_so_far)
 
-            t_so_far += np.sum(batch_lenghts)
+            self.t_so_far += np.sum(batch_lenghts)
 
-            if t_so_far % 1000 == 0:
-                torch.save(self.actor.state_dict(), f"./car_checkpoints/PPO_PyTorch/g_{t_so_far}.pth")
+            # Save a checkpoint
+            if self.t_so_far % 1000 == 0:
+                checkpoint = {
+                    'episode': self.t_so_far,
+                    'policy_state_dict': self.actor.state_dict(),
+                    'value_function_state_dict': self.critic.state_dict(),
+                    'optimizer_policy_state_dict': self.actor_optim.state_dict(),
+                    'optimizer_value_state_dict': self.critic_optim.state_dict()
+                }
+                torch.save(checkpoint, f"./car_checkpoints/PPO_PyTorch/checkpoint_{self.t_so_far}.pth")
+
 
 

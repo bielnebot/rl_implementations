@@ -1,9 +1,12 @@
+# Reinforcement learning implementations
 This repository contains:
 
-car_racing
-* DQN (raw, torchRL)
-* PPO (raw, torchRL)
+Car racing environment
 
+## To-Do
+- [ ] PPO with TorchRL
+- [ ] DQN with TorchRL
+- [ ] DQN from scratch
 
-
-LSTM setting
+## Done
+- [x] PPO from scratch

@@ -1,4 +1,6 @@
 import argparse
+import os
+
 import torch
 import gym
 
@@ -15,8 +17,19 @@ def train():
     env = gym.make('CarRacing-v0')
     env = CustomEnv(env)
 
+    # Check if there are existing checkpoints to continue training
+    checkpoint = None
+    existing_checkpoints = os.listdir("./car_checkpoints/PPO_PyTorch/")
+    if len(existing_checkpoints) > 0:
+        # Find the last one
+        checkpoints_numbers = [int(i.split("_")[1][:-4]) for i in existing_checkpoints]
+        last_checkpoint = max(checkpoints_numbers)
+        # Load it
+        checkpoint = torch.load(f"./car_checkpoints/PPO_PyTorch/checkpoint_{last_checkpoint}.pth")
+        print(f"Last checkpoint found: {last_checkpoint}")
+
     # Create PPO instance
-    model = PPO(env)
+    model = PPO(env, checkpoint)
 
     print("Training starts")
     model.learn(200_000_000)
@@ -25,16 +38,15 @@ def train():
 
 def test():
     # Create environment
-    env = gym.make('CarRacing-v0')
+    env = gym.make("CarRacing-v0")
     env = CustomEnv(env)
 
     # Extract policy input and output dimensions
-    # obs_dim = env.observation_space.shape[0]
     act_dim = env.action_space.shape[0]
 
     # Create a policy and load the weights
     policy = CustomNN(act_dim)
-    TIME_STEP_TO_TEST = 16000
+    TIME_STEP_TO_TEST = 80000
     policy.load_state_dict(torch.load(f"./car_checkpoints/PPO_PyTorch/g_{TIME_STEP_TO_TEST}.pth",weights_only=True))
 
     # Simulate an episode
@@ -56,3 +68,4 @@ if __name__ == "__main__":
     #
     # main(args)
     train()
+    # test()

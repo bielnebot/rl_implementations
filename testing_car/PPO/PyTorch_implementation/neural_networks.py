@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch import nn
 
+
 class CustomNN(nn.Module):
 
     def __init__(self, output_dimension):
@@ -27,6 +28,7 @@ class CustomNN(nn.Module):
         )
 
     def forward(self, x):
+        # Add an extra dimension in case only one image is fed
         if len(x.shape) == 3:
             x = np.reshape(x, (1,) + x.shape)
 
