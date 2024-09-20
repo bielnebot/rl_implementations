@@ -45,7 +45,6 @@ class PPO():
         self.variances = torch.full(size=(self.act_dim,), fill_value=0.5)
         self.covariance_matrix = torch.diag(self.variances)
 
-
     def _init_hyperparameters(self):
         self.time_steps_per_batch = 5000
         self.max_time_steps_per_episode = 1000
@@ -69,7 +68,6 @@ class PPO():
         log_prob = distribution.log_prob(action)
 
         return action.detach().numpy(), log_prob.detach()
-
 
     def compute_rewards_to_go(self, batch_rewards):
         """
@@ -121,7 +119,7 @@ class PPO():
 
             for time_step_i in range(self.max_time_steps_per_episode): # for each episode, do...
                 t += 1
-
+                # self.env.render()
                 # Collect observation
                 batch_observations.append(observation)
 
@@ -163,7 +161,6 @@ class PPO():
 
     def learn(self, total_time_steps):
 
-
         total_time_steps = self.t_so_far + total_time_steps # optionally to use interrupted training
         while self.t_so_far < total_time_steps:
             batch_observations, batch_actions, batch_log_probs, batch_rewards_to_go, batch_lenghts, batch_rewards = self.rollout()
@@ -187,6 +184,7 @@ class PPO():
                 surr1 = ratio * A_k
                 surr2 = torch.clamp(ratio, 1-self.clip, 1 + self.clip) * A_k
                 actor_loss = (-torch.min(surr1,surr2)).mean()
+
                 writer.add_scalar("actor_loss", actor_loss, self.loss_counter)
                 self.loss_counter += 1
 
@@ -200,10 +198,13 @@ class PPO():
                 critic_loss.backward()
                 self.critic_optim.step()
 
-            average_reward = np.mean(batch_rewards)
-            max_reward = np.max(batch_rewards)
-            writer.add_scalar("average_reward",average_reward,self.t_so_far)
-            writer.add_scalar("max_reward",max_reward,self.t_so_far)
+            # print("batch_rewards=",batch_rewards,type(batch_rewards),len(batch_rewards))
+            # print("batch_rewards[0]=",batch_rewards[0],type(batch_rewards[0]),len(batch_rewards[0]))
+            # average_reward = np.mean(batch_rewards)
+            # print("average_reward=",average_reward)
+            sum_reward = np.sum(batch_rewards)
+            average_reward_per_batch = sum_reward / 5 # 5 episodes (usually) per batch
+            writer.add_scalar("average_reward_per_episode",average_reward_per_batch,self.t_so_far)
 
             self.t_so_far += np.sum(batch_lenghts)
 
@@ -217,7 +218,7 @@ class PPO():
                     "optimizer_policy_state_dict": self.actor_optim.state_dict(),
                     "optimizer_value_state_dict": self.critic_optim.state_dict()
                 }
-                torch.save(checkpoint, f"./car_checkpoints/PPO_PyTorch/checkpoint_{self.t_so_far}.pth")
+                torch.save(checkpoint, f"./checkpoints/PPO_PyTorch/checkpoint_{self.t_so_far}.pth")
 
 
 

@@ -19,13 +19,13 @@ def train():
 
     # Check if there are existing checkpoints to continue training
     checkpoint = None
-    existing_checkpoints = os.listdir("./car_checkpoints/PPO_PyTorch/")
+    existing_checkpoints = os.listdir("./checkpoints/PPO_PyTorch/")
     if len(existing_checkpoints) > 0:
         # Find the last one
         checkpoints_numbers = [int(i.split("_")[1][:-4]) for i in existing_checkpoints]
         last_checkpoint = max(checkpoints_numbers)
         # Load it
-        checkpoint = torch.load(f"./car_checkpoints/PPO_PyTorch/checkpoint_{last_checkpoint}.pth")
+        checkpoint = torch.load(f"./checkpoints/PPO_PyTorch/checkpoint_{last_checkpoint}.pth")
         print(f"Last checkpoint found: {last_checkpoint}")
 
     # Create PPO instance
@@ -47,7 +47,7 @@ def test():
     # Create a policy and load the weights
     policy = CustomNN(act_dim)
     TIME_STEP_TO_TEST = 80000
-    policy.load_state_dict(torch.load(f"./car_checkpoints/PPO_PyTorch/g_{TIME_STEP_TO_TEST}.pth",weights_only=True))
+    policy.load_state_dict(torch.load(f"./checkpoints/PPO_PyTorch/g_{TIME_STEP_TO_TEST}.pth",weights_only=True))
 
     # Simulate an episode
     test_policy(env,policy)
