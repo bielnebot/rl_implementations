@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+
+
 def test_single_episode(env,policy):
 
     rewards = []
@@ -9,6 +12,11 @@ def test_single_episode(env,policy):
     for _ in range(10000):
         env.render()
         t += 1
+
+        # Plot
+        # plt.imshow(obs[0])
+        # plt.colorbar()
+        # plt.show()
 
         action = policy(obs).detach().numpy()[0]
         print("action=",action)
