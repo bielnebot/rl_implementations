@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
 from torch.optim import Adam
 from torch.distributions import MultivariateNormal
@@ -135,6 +136,10 @@ class PPO():
                 batch_log_probs.append(log_prob)
 
                 if done:
+                    # Plot
+                    # plt.imshow(observation[0])
+                    # plt.colorbar()
+                    # plt.show()
                     break
 
             # Collect episode rewards and length
@@ -202,8 +207,7 @@ class PPO():
             # print("batch_rewards[0]=",batch_rewards[0],type(batch_rewards[0]),len(batch_rewards[0]))
             # average_reward = np.mean(batch_rewards)
             # print("average_reward=",average_reward)
-            sum_reward = np.sum(batch_rewards)
-            average_reward_per_batch = sum_reward / 5 # 5 episodes (usually) per batch
+            average_reward_per_batch = np.sum(np.sum(batch_rewards)) / len(batch_rewards)
             writer.add_scalar("average_reward_per_episode",average_reward_per_batch,self.t_so_far)
 
             self.t_so_far += np.sum(batch_lenghts)
@@ -219,6 +223,19 @@ class PPO():
                     "optimizer_value_state_dict": self.critic_optim.state_dict()
                 }
                 torch.save(checkpoint, f"./checkpoints/PPO_PyTorch/checkpoint_{self.t_so_far}.pth")
+                print(f"saved: t_so_far={self.t_so_far}, loss_counter={self.loss_counter}")
+            print(f"iteration finished: t_so_far={self.t_so_far}, loss_counter={self.loss_counter}")
+
+        checkpoint = {
+            "t_so_far": self.t_so_far,
+            "loss_counter": self.loss_counter,
+            "policy_state_dict": self.actor.state_dict(),
+            "value_function_state_dict": self.critic.state_dict(),
+            "optimizer_policy_state_dict": self.actor_optim.state_dict(),
+            "optimizer_value_state_dict": self.critic_optim.state_dict()
+        }
+        torch.save(checkpoint, f"./checkpoints/PPO_PyTorch/checkpoint_{self.t_so_far}.pth")
+        print(f"saved end execution: t_so_far={self.t_so_far}, loss_counter={self.loss_counter}")
 
 
 

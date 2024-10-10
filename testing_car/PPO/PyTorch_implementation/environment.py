@@ -29,6 +29,7 @@ class CustomEnv(Wrapper):
     def __init__(self, env):
         super().__init__(env)
 
+        self.frames_counter = 0
         self.total_frames_no_road = 0
 
     def step(self, action):
@@ -46,16 +47,19 @@ class CustomEnv(Wrapper):
         # 0.42, 0.4, 0.408
         # Check if any values are in the range [0.399, 0.421]
         mask = (observation >= 0.399) & (observation <= 0.421)
-        if not np.any(mask):
+        if not np.any(mask) and self.frames_counter > 100:
             self.total_frames_no_road += 1
 
-        if self.total_frames_no_road > 10:
+        if self.total_frames_no_road > 100:
             done = True
-            reward = -100
+            # reward = -50
 
+        self.frames_counter += 1
         return observation, reward, done, info
 
     def reset(self):
+        self.frames_counter = 0
+        self.total_frames_no_road = 0
 
         observation = super().reset()
         observation = observation_transformation(observation)
