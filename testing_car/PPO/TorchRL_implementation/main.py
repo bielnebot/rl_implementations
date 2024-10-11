@@ -47,7 +47,7 @@ def train():
 
     # Create the environment
     env = gym.make('CarRacing-v0')
-    # env = CustomEnv(env)
+    env = CustomEnv(env)
     env = GymWrapper(env)
     check_env_specs(env)
 

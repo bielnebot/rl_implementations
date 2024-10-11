@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 import gym
 from gym import Wrapper
+from gym.spaces import Box
 
 
 def observation_transformation(image):
@@ -29,8 +30,13 @@ class CustomEnv(Wrapper):
     def __init__(self, env):
         super().__init__(env)
 
-    def step(self, action):
+        self.observation_space = Box(low=0.0, high=1.0, shape=(1, 84, 96))
 
+    def step(self, action):
+        # print("recieved action =",action, type(action), action.shape)
+        action = action.reshape(3)
+        # print("updated action=",action,type(action), action.shape)
+        # action = action[0]
         # Rescale gas and brake from [-1,1] to [0,1]
         rescaled_action = np.zeros(3)
         rescaled_action[0] = action[0]
