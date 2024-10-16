@@ -16,20 +16,18 @@ NUMBER_ACTIONS = 3
 
 def train():
     # Training
-    frames_per_batch = ...
-    total_frames = ...
-    minibatch_size = ...
-    lr = ...
+    frames_per_batch = 5000
+    total_frames = 50_000_000
+    minibatch_size = 250
+    lr = 1e-3
 
     # PPO
-    epsilon_start = ...
-    epsilon_end = ...
-    step_epsilon_decay = ...
-    double_DQN_epsilon_update = ...
+    epsilon_start = 0.5
+    epsilon_end = 0.1
+    step_epsilon_decay = 50_000
+    double_DQN_epsilon_update = 0.5
 
-    episode_length = ...
-    agent_hz = ...
-    simulation_hz = ...
+    episode_length = 1000
 
     # Create environment
     env = gym.make('CarRacing-v0')
@@ -75,8 +73,33 @@ def train():
 
     updater = SoftUpdate(loss_function, eps=double_DQN_epsilon_update) # for the double DQN
 
+    counter = 0
     # Training loop
-    # TODO
+    for batch_data in collector:
+
+        buffer.extend(batch_data)
+        for _ in range(frames_per_batch // minibatch_size):
+            sample = buffer.sample(minibatch_size)
+            loss_value = loss_function(sample)
+            loss_value = loss_value["loss"]
+
+            # Calculate gradients + backpropagate
+            loss_value.backward()
+            optim.step()
+            optim.zero_grad()
+
+        # Update the epsilon decay at each new batch
+        exploration_module.step(batch_data.numel())
+
+        # Save checkpoint
+        if counter % 10 == 0:
+            # TODO: torch.save()
+            pass
+
+        counter += 1
+
+        updater.step()
+        collector.update_policy_weights_()
 
 
 def test():
