@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import gym
 from gym import Wrapper
 from gym.spaces import Box
+from gym.spaces.discrete import Discrete
 
 
 def observation_transformation(image):
@@ -32,11 +33,20 @@ class CustomEnv(Wrapper):
 
         self.observation_space = Box(low=0.0, high=1.0, shape=(1, 84, 96))
 
+        self.available_actions = {0: np.array([0.0, 0.0, 0.0]), # do nothing
+                                  1: np.array([0.0, 0.5, 0.0]),  # forward
+                                  2: np.array([1.0, 0.0, 0.06]),  # right
+                                  3: np.array([-1.0, 0.0, 0.06]),  # left
+                                  4: np.array([0.0, 0.0, 0.5])}  # break
+
+        self.action_space = Discrete(len(self.available_actions))
+
     def step(self, action):
-        # print("recieved action =",action, type(action), action.shape)
-        action = action.reshape(3)
+        # print("recieved action =",action, type(action))
+        action = self.available_actions[action]
         # print("updated action=",action,type(action), action.shape)
         # action = action[0]
+
         # Rescale gas and brake from [-1,1] to [0,1]
         rescaled_action = np.zeros(3)
         rescaled_action[0] = action[0]

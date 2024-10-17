@@ -11,17 +11,17 @@ from torchrl.objectives import DQNLoss, SoftUpdate
 from environment import CustomEnv
 from neural_networks import CustomNN
 
-NUMBER_ACTIONS = 3
+NUMBER_ACTIONS = 5
 
 
 def train():
-    # Training
+    # Training parameters
     frames_per_batch = 5000
     total_frames = 50_000_000
     minibatch_size = 250
     lr = 1e-3
 
-    # PPO
+    # PPO parameters
     epsilon_start = 0.5
     epsilon_end = 0.1
     step_epsilon_decay = 50_000
@@ -65,8 +65,10 @@ def train():
         storage=LazyMemmapStorage(frames_per_batch)
     )
 
+    print("action_spec=",env.action_spec)
+    print("policy=",policy)
     loss_function = DQNLoss(value_network=policy,
-                            action_space=env.action_spec,
+                            action_space=env.action_spec, # using env.action_spec leads to one-hot
                             delay_value=True) # to use a double DQN
 
     optim = torch.optim.Adam(policy.parameters(), lr=lr)
@@ -80,6 +82,9 @@ def train():
         buffer.extend(batch_data)
         for _ in range(frames_per_batch // minibatch_size):
             sample = buffer.sample(minibatch_size)
+            print("sample=",sample, sample.shape)
+            print("sample['action_value']=", sample["action"], sample["action"].shape)
+            print("sample['action_value']=", sample["action_value"], sample["action_value"].shape)
             loss_value = loss_function(sample)
             loss_value = loss_value["loss"]
 
