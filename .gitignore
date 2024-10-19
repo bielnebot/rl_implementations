@@ -1,10 +1,12 @@
 # Ignore everything
 *
 
-!testing_car/
-!testing_car/**
+!car_racing/
+!car_racing/**
 
 # Other files
+!docs/
+!docs/**
 !README.md
 !.gitignore
 
