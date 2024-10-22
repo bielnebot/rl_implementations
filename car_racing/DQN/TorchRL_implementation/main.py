@@ -32,7 +32,7 @@ def train():
     # Create environment
     env = gym.make('CarRacing-v0')
     env = CustomEnv(env)
-    env = GymWrapper(env)
+    env = GymWrapper(env,categorical_action_encoding=True)
     check_env_specs(env)
 
     # Initialise Q-function
@@ -42,7 +42,7 @@ def train():
         out_keys="action_value"
     )
 
-    qval = QValueModule(spec=env.action_spec, action_space=None)
+    qval = QValueModule(spec=env.action_spec, action_space="categorical")
 
     exploration_module = EGreedyModule(spec=env.action_spec,
                                        eps_init=epsilon_start,
@@ -65,10 +65,10 @@ def train():
         storage=LazyMemmapStorage(frames_per_batch)
     )
 
-    print("action_spec=",env.action_spec)
-    print("policy=",policy)
+    # print("action_spec=",env.action_spec)
+    # print("policy=",policy)
     loss_function = DQNLoss(value_network=policy,
-                            action_space=env.action_spec, # using env.action_spec leads to one-hot
+                            action_space="categorical", # using env.action_spec leads to one-hot
                             delay_value=True) # to use a double DQN
 
     optim = torch.optim.Adam(policy.parameters(), lr=lr)
@@ -82,9 +82,9 @@ def train():
         buffer.extend(batch_data)
         for _ in range(frames_per_batch // minibatch_size):
             sample = buffer.sample(minibatch_size)
-            print("sample=",sample, sample.shape)
-            print("sample['action_value']=", sample["action"], sample["action"].shape)
-            print("sample['action_value']=", sample["action_value"], sample["action_value"].shape)
+            # print("sample=",sample, sample.shape)
+            # print("sample['action']=", sample["action"], sample["action"].shape)
+            # print("sample['action_value']=", sample["action_value"], sample["action_value"].shape)
             loss_value = loss_function(sample)
             loss_value = loss_value["loss"]
 

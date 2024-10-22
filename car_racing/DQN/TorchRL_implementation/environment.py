@@ -42,7 +42,7 @@ class CustomEnv(Wrapper):
         self.action_space = Discrete(len(self.available_actions))
 
     def step(self, action):
-        # print("recieved action =",action, type(action))
+        # print("received action =",action, type(action))
         action = self.available_actions[action]
         # print("updated action=",action,type(action), action.shape)
         # action = action[0]
@@ -82,7 +82,7 @@ def run_episode(policy=None):
             action = action.detach().numpy()[0]
         else:
             action = env.action_space.sample()
-            action = np.array([0,-0.5,0])
+            # action = np.array([0,-0.5,0])
         print("action=",action)
         # Step
         observation, reward, done, info = env.step(action)
