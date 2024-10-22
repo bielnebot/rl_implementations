@@ -65,8 +65,6 @@ def train():
         storage=LazyMemmapStorage(frames_per_batch)
     )
 
-    # print("action_spec=",env.action_spec)
-    # print("policy=",policy)
     loss_function = DQNLoss(value_network=policy,
                             action_space="categorical", # using env.action_spec leads to one-hot
                             delay_value=True) # to use a double DQN
@@ -82,9 +80,6 @@ def train():
         buffer.extend(batch_data)
         for _ in range(frames_per_batch // minibatch_size):
             sample = buffer.sample(minibatch_size)
-            # print("sample=",sample, sample.shape)
-            # print("sample['action']=", sample["action"], sample["action"].shape)
-            # print("sample['action_value']=", sample["action_value"], sample["action_value"].shape)
             loss_value = loss_function(sample)
             loss_value = loss_value["loss"]
 
